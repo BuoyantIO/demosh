@@ -587,6 +587,7 @@ class DemoState:
                 rc = self.shellstate.run(self, cmd)
 
                 if (rc != 0) and self.shellstate.exit_on_failure:
+                    print(f"{self.start_color(5)}...exiting due to failure.{self.end_color()}")
                     break
 
                 if self.showing and cmd.wait_after:
