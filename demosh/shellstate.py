@@ -65,6 +65,7 @@ class ShellState:
         self.tty = open("/dev/tty", "r+")
         self.exit_on_failure = False
 
+        self.shell = os.environ.get("SHELL", "/bin/sh")
         self.env["SHELL"] = os.path.abspath(__file__)
 
         self.env["0"] = os.path.abspath(script)
@@ -84,6 +85,9 @@ class ShellState:
             s = s.replace(bracketed, self.env[k])
 
         return s
+
+    def subshell(self, demostate: 'DemoState') -> None:
+        self.do_shell_command(demostate, f"{self.shell} -i")
 
     def run(self, demostate: 'DemoState', cmd: 'Command') -> int:
         cmdline = cmd.cmdline

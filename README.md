@@ -60,6 +60,12 @@ While "waiting for RETURN", there are several things you can actually type:
 - Hitting `+` will skip to the next command _without_ executing this one
   (note that this currently doesn't work well when executing a macro).
 
+- Hitting `!` will spawn a subshell with all the environment variables
+  defined in the script intact.
+
+   - **NOTE WELL**: the subshell will not, at present, include functions
+     defined in the script.
+
 When `demosh` has a command to execute in noninteractive mode, it just
 executes it.
 

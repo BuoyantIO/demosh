@@ -583,7 +583,8 @@ class DemoState:
 
             self.echo_blanks = True
 
-            if not action or ((action != "skip") and (action != "quit")):
+            if (not action or
+                ((action != "subshell") and (action != "skip") and (action != "quit"))):
                 rc = self.shellstate.run(self, cmd)
 
                 if (rc != 0) and self.shellstate.exit_on_failure:
@@ -592,6 +593,12 @@ class DemoState:
 
                 if self.showing and cmd.wait_after:
                     action = self.wait_to_proceed()
+
+            if action == "subshell":
+                # Repeat this same command when back from the subshell.
+                self.cmd_index -= 1
+                self.shellstate.subshell(self)
+                continue
 
             if action == "skip":
                 print(f"{self.start_color(5)}...skipping{self.end_color()}")
