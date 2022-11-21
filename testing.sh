@@ -33,6 +33,10 @@ function hello() {
 # Can we run the function?
 hello "world"
 
+# cd is handled internally, so this should work.
+cd /tmp
+pwd
+
 # Let's test a macro.
 wait_clear
 
@@ -62,8 +66,5 @@ hello "world again"
 
 sleep 120
 
-# cd is handled internally, so this should work.
-cd /tmp
-pwd
-
+# And now we should be back finishing up our demosh run.
 
