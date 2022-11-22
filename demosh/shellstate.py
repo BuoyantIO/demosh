@@ -179,7 +179,7 @@ class ShellState:
 
     def do_cd(self, demostate: 'DemoState', cmd: str) -> int:
         proc = subprocess.Popen(["bash", "-i"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                cwd=self.cwd, env=self.env, close_fds=True, preexec_fn=ShellState.allow_signals)
+                                cwd=self.cwd, env=self.env, close_fds=True)
 
         assert proc.stdin is not None   # hush, mypy
         proc.stdin.write(cmd.encode('utf-8'))
@@ -209,7 +209,7 @@ class ShellState:
         # print("assign '%s' = '%s'" % (name, value))
 
         proc = subprocess.Popen(["bash", "-i"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                cwd=self.cwd, env=self.env, close_fds=True, preexec_fn=ShellState.allow_signals)
+                                cwd=self.cwd, env=self.env, close_fds=True)
 
         assert proc.stdin is not None   # hush, mypy
         proc.stdin.write(f'{name}={value}\n'.encode('utf-8'))
