@@ -1,0 +1,21 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "demosh"
+authors = [{name = "Flynn", email = "demosh@flynn.kodachi.com"}]
+readme = "README.md"
+license = {file = "LICENSE"}
+classifiers = ["License :: OSI Approved :: Apache Software License"]
+dynamic = ["version", "description"]
+requires-python = ">=3.10"
+
+[project.urls]
+Home = "https://github.com/BuoyantIO/demosh"
+Documentation = "https://github.com/BuoyantIO/demosh#readme"
+Issues = "https://github.com/BuoyantIO/demosh/issues"
+Source = "https://github.com/BuoyantIO/demosh"
+
+[project.scripts]
+demosh = "demosh:main"
