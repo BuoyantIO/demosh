@@ -43,8 +43,9 @@ def chardelay() -> float:
 
 
 class DemoState:
-    def __init__(self, shellstate: 'ShellState', script: Iterator[str], parent: Optional['DemoState']=None) -> None:
+    def __init__(self, shellstate: 'ShellState', mode: str, script: Iterator[str], parent: Optional['DemoState']=None) -> None:
         self.parent = parent
+        self.mode = mode
         self.skipping = False
         self.showing = False
         self.echo_blanks = False
@@ -54,7 +55,7 @@ class DemoState:
 
         self._overrides: Dict[str, bool] = {}
 
-        self.reader = InputReader(script)
+        self.reader = InputReader(mode, script)
 
         self._action_chars = {
             # 'q':  "quit",
@@ -82,7 +83,7 @@ class DemoState:
 
         self.commands: List[Command] = []
 
-        self.read_commands(shellstate, InputReader(script))
+        self.read_commands(shellstate, InputReader(self.mode, script))
 
     def read_commands(self, shellstate: 'ShellState', reader: Optional[InputReader]) -> None:
         if reader is None:
@@ -94,9 +95,20 @@ class DemoState:
                 cmd = Command(rawcmd.value)
                 self.commands.append(cmd)
 
+            elif rawcmd.type == "comment":
+                assert isinstance(rawcmd, RawSingleValue)
+                cmd = Command(rawcmd.value, comment=True)
+                self.commands.append(cmd)
+
             elif rawcmd.type == "import":
                 assert isinstance(rawcmd, RawSingleValue)
-                ireader = InputReader(open(rawcmd.value, "r"))
+
+                imode = "shell"
+
+                if rawcmd.value.lower().endswith(".md"):
+                    imode = "markdown"
+
+                ireader = InputReader(imode, open(rawcmd.value, "r"))
                 self.read_commands(shellstate, ireader)
 
             elif rawcmd.type == "hook":
@@ -116,7 +128,7 @@ class DemoState:
 
             elif rawcmd.type == "macro":
                 assert isinstance(rawcmd, RawMultiValue)
-                macro_ds = DemoState(self.shellstate, iter(rawcmd.value), parent=self)
+                macro_ds = DemoState(self.shellstate, "shell", iter(rawcmd.value), parent=self)
 
                 self.shellstate.macros[rawcmd.name] = macro_ds
 
@@ -193,6 +205,32 @@ class DemoState:
 
         return self._end_color
 
+    def get_cap(self, capname: str) -> str:
+        cstr = self._colors.get(capname, None)
+
+        if cstr is None:
+            cstr = ""
+            cap = curses.tigetstr(capname)
+
+            if cap:
+                cstr = cap.decode('utf-8')
+
+            self._colors[capname] = cstr
+
+        return cstr
+
+    def start_bold(self) -> str:
+        return self.get_cap("smso")
+
+    def end_bold(self) -> str:
+        return self.get_cap("rmso")
+
+    def start_underline(self) -> str:
+        return self.get_cap("smul")
+
+    def end_underline(self) -> str:
+        return self.get_cap("rmul")
+
     def color(self, text: str) -> str:
         if not text:
             return ""
@@ -204,16 +242,150 @@ class DemoState:
 
         return ""
 
-    def display(self, text: str, newline: bool=True, force: bool=False) -> None:
+    def markdownify(self, text: str) -> str:
+        states = [ "LineStart" ]
+        dchars = { "`", "_" }
+        colors: List[str] = []
+        decorations: List[str] = []
+
+        output = ""
+        hc = 0
+
+        idx = 0
+
+        while idx < len(text):
+            c = text[idx]
+            idx += 1
+
+            state = states[-1]
+
+            if state == "LineStart":
+                if c == '#':
+                    # Header!
+                    hc = 1
+                    states.append("Header")
+                else:
+                    if not colors:
+                        cstr = self.start_color(1)
+                        colors.append(cstr)
+                        output += cstr
+
+                    states.append("Normal")
+                    idx -= 1
+
+            elif state == "Header":
+                if c == '#':
+                    hc += 1
+                else:
+                    if hc == 1:
+                        output += self.start_bold()
+
+                    cstr = self.start_color(2)
+                    colors.append(cstr)
+                    output += cstr
+                    output += self.start_underline()
+                    output += '#' * hc
+                    idx -= 1
+                    states.append("Normal")
+
+            elif state == "Normal":
+                if c == "\n":
+                    states.pop()
+
+                    if states[-1] == "Header":
+                        output += self.end_underline()
+                        output += self.end_bold()
+                        output += self.end_color()
+                        colors = []
+
+                        states.pop()
+                        assert states[-1] == "LineStart", "Popped Header and didn't get LineStart?"
+
+                elif c == "*":
+                    # Asterisk is weird because "**" and "*" are both valid
+                    # decorations, and because "*" can also mark a list item.
+                    states.append("Asterisk")
+                    continue
+
+                elif c in dchars:
+                    if decorations and (c == decorations[-1]):
+                        decorations.pop()
+                        colors.pop()
+                        output += colors[-1]
+                        continue
+                    else:
+                        color = 5
+
+                        if c == '`':
+                            color = 4
+                        elif c == '_':
+                            color = 4
+
+                        cstr = self.start_color(color)
+                        colors.append(cstr)
+                        output += cstr
+
+                        decorations.append(c)
+                        continue
+
+                output += c
+
+            elif state == "Asterisk":
+                # We're not going to stay in the Asterisk
+                # state no matter what.
+                states.pop()
+
+                if c == '*':
+                    # Two asterisks is its very own kind of decoration.
+                    if decorations and ("**" == decorations[-1]):
+                        decorations.pop()
+                        colors.pop()
+                        output += colors[-1]
+                        continue
+
+                    cstr = self.start_color(5)
+                    colors.append(cstr)
+                    output += cstr
+                    decorations.append("**")
+                elif (decorations and ("*" == decorations[-1])):
+                    # This is the end of a single asterisk decoration.
+                    decorations.pop()
+                    colors.pop()
+                    output += colors[-1] + c
+                    continue
+                elif not (c.isalnum() or (c == "\n")):
+                    # This is just a plain old asterisk, not the start of
+                    # anything.
+                    output += "*" + c
+                else:
+                    # One asterisk is a decoration.
+                    if decorations and ("*" == decorations[-1]):
+                        decorations.pop()
+                        colors.pop()
+                        output += colors[-1]
+                        continue
+
+                    cstr = self.start_color(5)
+                    colors.append(cstr)
+                    output += cstr + c
+                    decorations.append("*")
+
+        output += self.end_color()
+
+        return output
+
+    def display(self, text: str, newline: bool=True, force: bool=False, markdown: bool=False) -> None:
         if self.showing or force:
             if text == "":
                 if not (self.echo_blanks or force):
                     return
 
-            sys.stdout.write(self.color(text))
-            sys.stdout.write(text)
-
-            sys.stdout.write(self.end_color())
+            if not markdown:
+                sys.stdout.write(self.color(text))
+                sys.stdout.write(text)
+                sys.stdout.write(self.end_color())
+            else:
+                sys.stdout.write(self.markdownify(text))
 
             if newline:
                 sys.stdout.write("\n")
@@ -345,7 +517,8 @@ class DemoState:
                     if cmd.cmdline.startswith("#$"):
                         self.display_slowly("$ ", cmd.cmdline[2:].strip(), "\n")
                     else:
-                        self.display(self.shellstate.expand_env(cmd.cmdline.rstrip()))
+                        self.display(self.shellstate.expand_env(cmd.cmdline.rstrip()),
+                                     markdown=cmd.comment)
                     continue
 
             # If we're here, it's meant to be executed. First, apply overrides.

@@ -113,7 +113,9 @@ class Command:
 
 
 class InputReader:
-    def __init__(self, input: Iterator[str]) -> None:
+    def __init__(self, mode: str, input: Iterator[str]) -> None:
+        self.mode = mode
+        self.markdown_allowed = (mode == "markdown")
         self.input = input
 
     def parse_directive(self, line: str) -> Union[RawSingleValue, RawMultiValue]:
@@ -153,47 +155,88 @@ class InputReader:
         braces = 0
 
         for line in self.input:
-            done = False
-            # print(f'<<< {line.rstrip()}')
+            if self.mode == "shell":
+                done = False
+                # print(f'<<< {line.rstrip()}')
 
-            if (line.startswith("#@hook ") or
-                line.startswith("#@macro ") or
-                line.startswith("#@import ")):
-                if buf:
-                    raise Exception("Can't have a directive in a compound statement")
+                if (line.startswith("#@hook ") or
+                    line.startswith("#@macro ") or
+                    line.startswith("#@import ")):
+                    if buf:
+                        raise Exception("Can't have a directive in a compound statement")
 
-                rawcmd = self.parse_directive(line.strip())
-                yield rawcmd
-                continue
+                    rawcmd = self.parse_directive(line.strip())
+                    yield rawcmd
+                    continue
 
-            buf += line
-            stripped = line.rstrip()
+                if line.strip() == "```":
+                    # This is the end of a bash block in Markdown, and it's
+                    # not allowed in one of our shell-script inputs.
+                    if self.markdown_allowed:
+                        self.mode = "markdown"
+                        continue
 
-            if stripped:
-                c = stripped[-1]
-            else:
-                c = '\n'
-
-            if c == '\\':
-                pass
-            elif c == '{':
-                braces += 1
-            elif c == '}':
-                braces -= 1
-
-                if braces <= 0:
                     done = True
-                    braces = 0
-            elif braces <= 0:
-                done = True
+                    break
 
-            # print(f'{done} {ord(c)} {braces} {line}')
+                buf += line
+                stripped = line.rstrip()
 
-            if done:
-                yield RawSingleValue("cmd", "cmd", buf)
+                if stripped:
+                    c = stripped[-1]
+                else:
+                    c = '\n'
 
-                buf = ""
-                continue
+                if c == '\\':
+                    pass
+                elif c == '{':
+                    braces += 1
+                elif c == '}':
+                    braces -= 1
+
+                    if braces <= 0:
+                        done = True
+                        braces = 0
+                elif braces <= 0:
+                    done = True
+
+                # print(f'{done} {ord(c)} {braces} {line}')
+
+                if done:
+                    yield RawSingleValue("cmd", "cmd", buf)
+
+                    buf = ""
+                    continue
+
+            elif self.mode == "markdown":
+                # If we see "```bash" or "```sh", we switch to shell mode.
+                if line.startswith("```bash") or line.startswith("```sh"):
+                    if buf:
+                        yield RawSingleValue("comment", "comment", buf)
+                        buf = ""
+
+                    self.mode = "shell"
+                    continue
+
+                # OK, not a bash block. Is it a directive in a Markdown comment?
+                if line.startswith("<!-- @"):
+                    if buf:
+                        yield RawSingleValue("comment", "comment", buf)
+                        buf = ""
+
+                    line = line.replace("<!-- @", "#@")
+                    line = line.replace("-->", "")
+
+                    rawcmd = self.parse_directive(line.strip())
+                    # print(f"markdown directive: {type} {name} {path}")
+                    yield rawcmd
+                    continue
+
+                # Not a bash block, not a directive. Save it.
+                buf += line
 
         if buf:
-            yield RawSingleValue("cmd", "cmd", buf)
+            if self.mode == "shell":
+                yield RawSingleValue("cmd", "cmd", buf)
+            else:
+                yield RawSingleValue("comment", "comment", buf)

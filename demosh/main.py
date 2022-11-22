@@ -36,10 +36,15 @@ def main() -> None:
         sys.exit(1)
 
     scriptname = sys.argv[1]
+    mode = "shell"
+
+    if scriptname.lower().endswith(".md"):
+        mode = "markdown"
+
     script = open(scriptname, "r")
 
     shellstate = ShellState(scriptname, sys.argv[2:])
-    demostate = DemoState(shellstate, script)
+    demostate = DemoState(shellstate, mode, script)
 
     try:
         demostate.run()

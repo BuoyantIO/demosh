@@ -1,9 +1,10 @@
 # `demosh`
 
-**tl;dr:** `demosh` can run shell scripts in a very interactive way, showing
-comments in between running commands, and waiting for you to hit RETURN to
-proceed before running commands. It was created as a tool for doing live
-demos of relatively complex things. See `testing.sh` for an example.
+**tl;dr:** `demosh` can run shell scripts or Markdown files in a very
+interactive way, showing commentary in between running commands, and waiting
+for you to hit RETURN to proceed before running commands. It was created as
+a tool for doing live demos of relatively complex things. See `testing.md`
+and `testing.sh` for examples.
 
 <!--
 SPDX-FileCopyrightText: 2022 Buoyant, Inc.
@@ -14,18 +15,19 @@ For build instructions, see [`BUILDING.md`](BUILDING.md).
 
 ----
 
-`demosh` is a demo shell: it reads shell scripts and executes the commands
-from them. However, it can also output comments in the script, show commands
-before running them, and pause before (or after) running each command.
-Pausing and what to show can be controlled by inline comments in the script
-itself. See `testing.sh` for an example.
+`demosh` is a demo shell: it reads shell scripts or Markdown files and
+executes shell commands from them. However, it can also output commentary
+from the script, show commands before running them, and pause before (or
+after) running each command. Pausing and what to show can be controlled by
+inline comments in the script itself. See `testing.md` and `testing.sh` for
+examples.
 
 ## Running
 
 Run `demosh path-to-script [arg [arg [...]]]` as if `demosh` were itself the
 shell.
 
-**`demosh` starts out _not_ showing comments and _not_ being interactive**,
+**`demosh` starts out _not_ showing commentary and _not_ being interactive**,
 so that the script can do initialization quietly. Use the `@SHOW` directive
 to switch into the fully-interactive mode (and use `@HIDE` to go back).
 
@@ -63,7 +65,7 @@ executes it.
 
 ## Directives
 
-`demosh` directives look like comments:
+When reading from shell scripts, `demosh` directives look like comments:
 
 ```bash
 #@SHOW
@@ -73,9 +75,19 @@ executes it.
 etc. **There must not be any spaces between `#` and `@` -- only `#@` can
 start a directive.**
 
+When reading Markdown, directives can still be in comments in `bash` blocks,
+but most of the time it works better to put them in Markdown comments:
+
+```markdown
+<!-- @SHOW -->
+<!-- @HIDE -->
+```
+
+etc. **Note that there is no leading `#` in this case.**
+
 ### Valid directives:
 
-- `@SHOW`: start showing comments, displaying commands before running them,
+- `@SHOW`: start showing commentary, displaying commands before running them,
    waiting for the user to hit RETURN before running things, etc. This is
    `demosh`'s fully-interactive-during-a-demo mode.
 
@@ -89,7 +101,7 @@ start a directive.**
    working so smoothly.
 
 - `@wait`: wait for RETURN before proceeding. This can be useful for e.g.
-   pausing while showing longer blocks of text.
+   pausing while showing longer blocks of commentary.
 
 - `@waitafter`: wait _after_ running the next command, as well as before.
 
@@ -118,7 +130,8 @@ start a directive.**
 
 - `@hook`: see "Hooks" below.
 
-Finally, any other directive will be interpreted as an immediate command, so:
+Finally, any other directive will be interpreted as an immediate command, so
+(in shell mode):
 
 ```bash
 #@foobar
@@ -144,6 +157,10 @@ The `@import <pathname>` directive reads the given pathname and inserts its
 contents into the input stream. This is mostly a way of getting annoying
 setup code out of the main script, to make the main script easier for others
 to read.
+
+You can import Markdown into shell scripts and vice-versa: `@import` will
+read its argument as Markdown if the pathname ends in `.md`, or as shell
+otherwise.
 
 ### Macros
 
@@ -209,9 +226,11 @@ run the script without `demosh`.
 `demosh` doesn't even try to fully parse the insanity of shell syntax.
 Instead, it does things more simply:
 
-- Lines starting with `#` are comments, and will be displayed in interactive
-  mode. Blank lines are considered comments, too, but multiple blanks are
-  folded into one.
+### When reading shell scripts
+
+- Lines starting with `#` are considered commentary, and will be displayed in
+  interactive mode. Blank lines are considered commentary, too, but multiple
+  blanks are folded into one.
 
 - Once `demosh` sees a line that doesn't look like a comment, it reads lines
   until an unescaped newline that's not inside curly braces is found. This
@@ -220,6 +239,14 @@ Instead, it does things more simply:
 - "Unescaped" means that the newline is not preceded by a backslash. The
   curly-brace thing is for shell functions. We do _NOT_ parse quoted
   strings at present; I don't see the benefit for demo scripts.
+
+### When reading Markdown
+
+- Anything outside a code block is considered commentary. Multiple blank
+  lines will be folded into one.
+
+- Within a code block marked as either `bash` or `sh`, lines get parsed as if
+  `demo` were reading a shell script.
 
 ## Processing
 
