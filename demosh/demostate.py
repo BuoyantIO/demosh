@@ -32,7 +32,7 @@ import random
 import select
 import termios
 
-from .command import RawSingleValue, RawMultiValue, Command
+from .command import RawSingleValue, RawMultiValue, Command, InputReader
 
 if TYPE_CHECKING:
     from .shellstate import ShellState
@@ -53,6 +53,8 @@ class DemoState:
         self._colors: Dict[str, str] = {}
 
         self._overrides: Dict[str, bool] = {}
+
+        self.reader = InputReader(script)
 
         self._action_chars = {
             # 'q':  "quit",
@@ -80,24 +82,23 @@ class DemoState:
 
         self.commands: List[Command] = []
 
-        self.read_commands(shellstate, script)
+        self.read_commands(shellstate, InputReader(script))
 
-    def read_commands(self, shellstate: 'ShellState', script: Iterator[str]) -> None:
-        while True:
-            cmd = Command()
+    def read_commands(self, shellstate: 'ShellState', reader: Optional[InputReader]) -> None:
+        if reader is None:
+            reader = self.reader
 
-            rawcmd = cmd.read_command(script)
-
-            if not rawcmd:
-                break
-
+        for rawcmd in reader.read_element():
             if rawcmd.type == "cmd":
                 assert isinstance(rawcmd, RawSingleValue)
-                cmd.cmdline = rawcmd.value
+                cmd = Command(rawcmd.value)
+                self.commands.append(cmd)
+
             elif rawcmd.type == "import":
                 assert isinstance(rawcmd, RawSingleValue)
-                self.read_commands(shellstate, open(rawcmd.value))
-                continue
+                ireader = InputReader(open(rawcmd.value, "r"))
+                self.read_commands(shellstate, ireader)
+
             elif rawcmd.type == "hook":
                 assert isinstance(rawcmd, RawSingleValue)
                 varname = f"DEMO_HOOK_{rawcmd.value}"
@@ -112,20 +113,16 @@ class DemoState:
                     value,
                     "}"
                 ]))
-                continue
+
             elif rawcmd.type == "macro":
                 assert isinstance(rawcmd, RawMultiValue)
                 macro_ds = DemoState(self.shellstate, iter(rawcmd.value), parent=self)
 
                 self.shellstate.macros[rawcmd.name] = macro_ds
-                continue
-
-            self.commands.append(cmd)
-            # print(f"<<<: {cmd}")
 
     def handlemeta(self, cmd: Command) -> bool:
         # Make mypy shut up
-        assert cmd.cmdline and (len(cmd.cmdline) > 2) and (cmd.cmdline[0] == "#")
+        assert (len(cmd.cmdline) > 2) and (cmd.cmdline[0] == "#")
 
         cs = cmd.cmdline[2:].strip()
 
