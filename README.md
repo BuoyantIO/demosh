@@ -10,6 +10,8 @@ SPDX-FileCopyrightText: 2022 Buoyant, Inc.
 SPDX-License-Identifier: Apache-2.0
 -->
 
+For build instructions, see [`BUILDING.md`](BUILDING.md).
+
 ----
 
 `demosh` is a demo shell: it reads shell scripts and executes the commands
