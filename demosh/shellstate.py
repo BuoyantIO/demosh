@@ -62,7 +62,6 @@ class ShellState:
         self.env = os.environ.copy()
         self.functions: List[str] = []
         self.macros: Dict[str, 'DemoState'] = {}
-        self.tty = open("/dev/tty", "r+")
         self.exit_on_failure = False
 
         self.shell = os.environ.get("SHELL", "/bin/sh")
@@ -231,7 +230,7 @@ class ShellState:
     def do_shell_command(self, demostate: 'DemoState', cmd: str) -> int:
         allcmd = "\n".join(self.functions) + "\n" + cmd
 
-        proc = subprocess.Popen(allcmd, shell=True, stdin=self.tty, stdout=self.tty, stderr=self.tty,
+        proc = subprocess.Popen(allcmd, shell=True,
                                 cwd=self.cwd, env=self.env, close_fds=True, preexec_fn=ShellState.allow_signals)
 
         proc.wait()
