@@ -139,4 +139,4 @@ Ctrl-C to interrupt the sleep.
 sleep 120
 ```
 
-And now we should be back finishing up our `demosh` run.
+And that's the whole `demosh` Markdown demo!!

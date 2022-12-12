@@ -2,7 +2,8 @@
 
 ## Installing `demosh`
 
-To install `demosh` from source, you'll need [`flit`](https://flit.pypa.io/en/stable/) and `make`.
+To install `demosh` from source, you'll need Python 3.10.8 or higher,
+[`flit`](https://flit.pypa.io/en/stable/) and `make`.
 
 - Install `flit`.
 - Run `make install`.

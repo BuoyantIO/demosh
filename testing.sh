@@ -66,5 +66,4 @@ hello "world again"
 
 sleep 120
 
-# And now we should be back finishing up our demosh run.
-
+# And that's the whole `demosh` shell-script demo!!
