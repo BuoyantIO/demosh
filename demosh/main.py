@@ -43,7 +43,7 @@ def main() -> None:
 
     script = open(scriptname, "r")
 
-    shellstate = ShellState(scriptname, sys.argv[2:])
+    shellstate = ShellState(sys.argv[0], scriptname, sys.argv[2:])
     demostate = DemoState(shellstate, mode, script)
 
     try:

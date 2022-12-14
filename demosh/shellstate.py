@@ -57,7 +57,7 @@ class ShellState:
         signal.signal(signal.SIGINT, signal.SIG_DFL)
         signal.signal(signal.SIGTERM, signal.SIG_DFL)
 
-    def __init__(self, script: str, args: List[str]) -> None:
+    def __init__(self, argv0, script: str, args: List[str]) -> None:
         self.cwd = os.getcwd()
         self.env = os.environ.copy()
         self.functions: List[str] = []
@@ -65,7 +65,7 @@ class ShellState:
         self.exit_on_failure = False
 
         self.shell = os.environ.get("SHELL", "/bin/sh")
-        self.env["SHELL"] = os.path.abspath(__file__)
+        self.env["SHELL"] = os.path.abspath(argv0)
 
         self.env["0"] = os.path.abspath(script)
         # print(f">> set $0 = {self.env['0']}")
