@@ -24,18 +24,24 @@
 
 import sys
 
+import argparse
 import os
 
+from . import __version__
 from .shellstate import ShellState
 from .demostate import DemoState
 
 
 def main() -> None:
-    if len(sys.argv) < 2:
-        print("Usage: %s script [arg [arg [...]]]" % os.path.basename(sys.argv[0]))
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description='Demo SHell: run shell scripts with commentary and pauses')
 
-    scriptname = sys.argv[1]
+    parser.add_argument('--version', action='version', version=f"%(prog)s {__version__}")
+    parser.add_argument('script', type=str, help="script to run")
+    parser.add_argument('args', type=str, nargs=argparse.REMAINDER, help="optional arguments to pass to script")
+
+    args = parser.parse_args()
+
+    scriptname = args.script
     mode = "shell"
 
     if scriptname.lower().endswith(".md"):
@@ -43,8 +49,8 @@ def main() -> None:
 
     script = open(scriptname, "r")
 
-    shellstate = ShellState(sys.argv[0], scriptname, sys.argv[2:])
     demostate = DemoState(shellstate, mode, script)
+    shellstate = ShellState(sys.argv[0], scriptname, args.args)
 
     try:
         demostate.run()
