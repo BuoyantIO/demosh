@@ -29,8 +29,8 @@ finding its repo, it's at github.com/BuoyantIO/demosh.
 """
 
 
-# This is DYNAMICALLY MANAGED by flit.
-__version__ = "0.1.0"
+# Flit reads this dynamically when building or publishing.
+__version__ = "0.2.0"
 
 
 import sys
