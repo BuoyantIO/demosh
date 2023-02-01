@@ -121,7 +121,7 @@ class DemoState:
                     value = ":;"
 
                 shellstate.functions.append("\n".join([
-                    "function %s () {" % rawcmd.name,
+                    "%s() {" % rawcmd.name,
                     value,
                     "}"
                 ]))

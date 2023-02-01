@@ -109,7 +109,9 @@ class ShellState:
         m = reFunction.match(cmdline)
 
         if m:
-            # print(cmdline)
+            cmdline = f"{m.group(2)}() {{" + cmdline[m.end():]
+            # print(f"Function: {cmdline}")
+
             self.functions.append(cmdline)
             return 0
 

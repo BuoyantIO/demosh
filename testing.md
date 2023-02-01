@@ -61,7 +61,7 @@ The `$SHELL` environment variable should be overwritten to be `demosh` itself.
 echo "SHELL is $SHELL"
 ```
 
-Here's a function definition.
+Here's a function definition with the `function` keyword...
 
 ```bash
 function hello() {
@@ -69,10 +69,19 @@ function hello() {
 }
 ```
 
-Can we run the function?
+...and here's one without it.
+
+```bash
+hello2 () {
+    echo "Hello again, $1!"
+}
+```
+
+Can we run the functions?
 
 ```bash
 hello "world"
+hello2 "world"
 ```
 
 ### `cd`

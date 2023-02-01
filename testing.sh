@@ -25,13 +25,19 @@ echo "$FOO"
 # The $SHELL environment variable should be overwritten to be demosh itself.
 echo "SHELL is $SHELL"
 
-# Here's a function definition.
-function hello() {
+# Here's a function definition with the "function" keyword...
+hello() {
     echo "Hello, $1!"
 }
 
-# Can we run the function?
+# ...and here's one without it.
+hello2 () {
+    echo "Hello again, $1!"
+}
+
+# Can we run the functions?
 hello "world"
+hello2 "world"
 
 # cd is handled internally, so this should work.
 cd /tmp
