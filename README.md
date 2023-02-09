@@ -11,7 +11,8 @@ SPDX-FileCopyrightText: 2022 Buoyant, Inc.
 SPDX-License-Identifier: Apache-2.0
 -->
 
-For build instructions, see [`BUILDING.md`](BUILDING.md).
+- For build instructions, see [`BUILDING.md`](BUILDING.md).
+- For a demo of `demosh` itself, see [`demo/DEMO.md`](demo/DEMO.md).
 
 ----
 
