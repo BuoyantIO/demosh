@@ -175,6 +175,9 @@ class DemoState:
         elif cs == "noshow":
             self._overrides['type_command'] = False
             return True
+        elif cs == "notypeout":
+            self._overrides['typeout'] = False
+            return True
         else:
             self._overrides['wait_before'] = False
             self._overrides['wait_after'] = False
@@ -584,7 +587,7 @@ class DemoState:
                             if cmd.wait_before:
                                 action = self.wait_to_proceed()
 
-                        if cmd.wait_before:
+                        if cmd.wait_before or (not typeout):
                             sys.stdout.write("\n")
                             sys.stdout.flush()
                 elif cmd.explicit_wait:

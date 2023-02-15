@@ -116,6 +116,9 @@ etc. **Note that there is no leading `#` in this case.**
 
 - `@noshow`: do not display the next command.
 
+- `@notypeout`: don't slowly type the next command, just spit it out all at
+  once.
+
 - `@immed` or `@immediate`: don't display the next command and don't wait
    before or after it. This is a way to run a command inline without showing
    it to the viewers.
