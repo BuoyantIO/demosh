@@ -25,7 +25,6 @@
 import sys
 
 import argparse
-import os
 
 from . import __version__
 from .shellstate import ShellState
