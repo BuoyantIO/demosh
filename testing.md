@@ -46,6 +46,9 @@ world* for emphasis?
 * Asterisks can also be list items.
 - So can dashes.
 
+Backticks don't do other formatting, so `COLOR_NAME` should format correctly,
+as should `_*_*_*_*_`.
+
 ### Assignments and functions
 
 Let's try an assignment.
@@ -104,7 +107,7 @@ wait_clear
 # How about an immediate macro call?
 #@wait_then_date
 ```
-
+<!-- @clear -->
 ### Waiting (or not)
 
 Here, we'll need to hit RETURN to run our command.

@@ -22,7 +22,7 @@
 # For more info, see README.md. If you've somehow found demosh without also
 # finding its repo, it's at github.com/BuoyantIO/demosh.
 
-from typing import Generator, Iterator, List, Union
+from typing import Generator, Iterator, List, Optional, Union
 
 class RawSingleValue:
     def __init__(self, type: str, name: str, value: str) -> None:
@@ -44,9 +44,10 @@ class RawMultiValue:
 
 
 class Command:
-    def __init__(self, cmdline: str, comment: bool=False) -> None:
+    def __init__(self, cmdline: str, comment: Optional[bool]=False, markdown: Optional[bool]=False) -> None:
         self.cmdline = cmdline
         self.comment = comment
+        self.markdown = markdown
         self.hidden = False
         self.type_command = True
         self.typeout = True
@@ -55,7 +56,7 @@ class Command:
         self.explicit_wait = False
 
     def copy(self) -> 'Command':
-        c2 = Command(self.cmdline, comment=self.comment)
+        c2 = Command(self.cmdline, comment=self.comment, markdown=self.markdown)
         c2.cmdline = self.cmdline
         c2.hidden = self.hidden
         c2.type_command = self.type_command
@@ -74,7 +75,11 @@ class Command:
         H = "H" if self.hidden else " "
 
         hrcmd = self.cmdline.rstrip()
-        kind = "###" if self.comment else "CMD"
+
+        kind = "CMD"
+
+        if self.comment:
+            kind = "#M#" if self.markdown else "###"
 
         return f"<{kind} {S}{B}{A}{T}{H} {hrcmd}>"
 
@@ -98,6 +103,9 @@ class Command:
 
     def ishiddencomment(self) -> bool:
         if not self.cmdline:
+            return False
+
+        if self.markdown:
             return False
 
         return self.cmdline.startswith("#!") or self.cmdline.startswith("##")
@@ -155,9 +163,13 @@ class InputReader:
         braces = 0
 
         for line in self.input:
+            # print(f'<<< {self.mode[0].upper()}: {line.rstrip()}')
+
+            # if buf:
+            #     print(f'    B: {buf}')
+
             if self.mode == "shell":
                 done = False
-                # print(f'<<< {line.rstrip()}')
 
                 if (line.startswith("#@hook ") or
                     line.startswith("#@macro ") or
@@ -203,7 +215,10 @@ class InputReader:
                 # print(f'{done} {ord(c)} {braces} {line}')
 
                 if done:
-                    yield RawSingleValue("cmd", "cmd", buf)
+                    if buf.startswith("#"):
+                        yield RawSingleValue("comment", "shell", buf)
+                    else:
+                        yield RawSingleValue("cmd", "cmd", buf)
 
                     buf = ""
                     continue
@@ -212,7 +227,7 @@ class InputReader:
                 # If we see "```bash" or "```sh", we switch to shell mode.
                 if line.startswith("```bash") or line.startswith("```sh"):
                     if buf:
-                        yield RawSingleValue("comment", "comment", buf)
+                        yield RawSingleValue("comment", "markdown", buf)
                         buf = ""
 
                     self.mode = "shell"
@@ -221,14 +236,14 @@ class InputReader:
                 # OK, not a bash block. Is it a directive in a Markdown comment?
                 if line.startswith("<!-- @"):
                     if buf:
-                        yield RawSingleValue("comment", "comment", buf)
+                        yield RawSingleValue("comment", "markdown", buf)
                         buf = ""
 
                     line = line.replace("<!-- @", "#@")
                     line = line.replace("-->", "")
 
                     rawcmd = self.parse_directive(line.strip())
-                    # print(f"markdown directive: {type} {name} {path}")
+                    # print(f"markdown directive: {rawcmd}")
                     yield rawcmd
                     continue
 
@@ -237,6 +252,9 @@ class InputReader:
 
         if buf:
             if self.mode == "shell":
-                yield RawSingleValue("cmd", "cmd", buf)
+                if buf.startswith("#"):
+                    yield RawSingleValue("comment", "shell", buf)
+                else:
+                    yield RawSingleValue("cmd", "cmd", buf)
             else:
-                yield RawSingleValue("comment", "comment", buf)
+                yield RawSingleValue("comment", "markdown", buf)

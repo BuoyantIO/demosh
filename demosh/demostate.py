@@ -103,7 +103,7 @@ class DemoState:
 
             elif rawcmd.type == "comment":
                 assert isinstance(rawcmd, RawSingleValue)
-                cmd = Command(rawcmd.value, comment=True)
+                cmd = Command(rawcmd.value, comment=True, markdown=(rawcmd.name == "markdown"))
                 self.commands.append(cmd)
 
             elif rawcmd.type == "import":
@@ -313,7 +313,23 @@ class DemoState:
                     states.append("Asterisk")
                     continue
 
+                elif c == "`":
+                    # It's important to realize that we'll never have "```" at this point
+                    # (it will have become a command) and also that we don't want to do
+                    # formatting inside backticks. So switch to a new state.
+
+                    states.append("Backtick")
+
+                    # Switch to color 4.
+                    cstr = self.start_color(4)
+                    colors.append(cstr)
+                    output += cstr
+
+                    continue
+
                 elif c in dchars:
+                    # XXX Kind of leftover code: the only decoration we can see here is
+                    # an underscore, so this can probably be simplified now.
                     if decorations and (c == decorations[-1]):
                         decorations.pop()
                         colors.pop()
@@ -375,6 +391,16 @@ class DemoState:
                     colors.append(cstr)
                     output += cstr + c
                     decorations.append("*")
+
+            elif state == "Backtick":
+                if c == "`":
+                    # Done with backticks!
+                    states.pop()
+                    colors.pop()
+                    output += colors[-1]
+                    continue
+
+                output += c
 
         output += self.end_color()
 
@@ -525,7 +551,7 @@ class DemoState:
                         self.display_slowly("$ ", cmd.cmdline[2:].strip(), "\n")
                     else:
                         self.display(self.shellstate.expand_env(cmd.cmdline.rstrip()),
-                                     markdown=cmd.comment)
+                                     markdown=cmd.markdown)
                     continue
 
             # If we're here, it's meant to be executed. First, apply overrides.
