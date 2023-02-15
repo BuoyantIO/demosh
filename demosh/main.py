@@ -36,6 +36,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description='Demo SHell: run shell scripts with commentary and pauses')
 
     parser.add_argument('--version', action='version', version=f"%(prog)s {__version__}")
+    parser.add_argument('--debug', action='store_true', help="enable debug output")
+
     parser.add_argument('script', type=str, help="script to run")
     parser.add_argument('args', type=str, nargs=argparse.REMAINDER, help="optional arguments to pass to script")
 
@@ -49,8 +51,8 @@ def main() -> None:
 
     script = open(scriptname, "r")
 
-    demostate = DemoState(shellstate, mode, script)
     shellstate = ShellState(sys.argv[0], scriptname, args.args)
+    demostate = DemoState(shellstate, mode, script, debug=args.debug)
 
     try:
         demostate.run()

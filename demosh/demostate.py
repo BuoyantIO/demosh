@@ -43,7 +43,10 @@ def chardelay() -> float:
 
 
 class DemoState:
-    def __init__(self, shellstate: 'ShellState', mode: str, script: Iterator[str], parent: Optional['DemoState']=None) -> None:
+    def __init__(self, shellstate: 'ShellState', mode: str, script: Iterator[str],
+                 parent: Optional['DemoState']=None,
+                 debug: Optional[bool]=False) -> None:
+        self.debug = debug
         self.parent = parent
         self.mode = mode
         self.skipping = False
@@ -90,6 +93,9 @@ class DemoState:
             reader = self.reader
 
         for rawcmd in reader.read_element():
+            if self.debug:
+                print(f"CMD {rawcmd}")
+
             if rawcmd.type == "cmd":
                 assert isinstance(rawcmd, RawSingleValue)
                 cmd = Command(rawcmd.value)
@@ -487,7 +493,8 @@ class DemoState:
             if not self.showing:
                 cmd.hidden = True
 
-            # print(f"--{self.skipping and '#' or '-'} {self.cmd_index}: {cmd}")
+            if self.debug:
+                print(f"--{self.skipping and '#' or '-'} {self.cmd_index}: {cmd}")
 
             self.cmd_index += 1
 
@@ -530,7 +537,8 @@ class DemoState:
             # Clear the overrides.
             self._overrides = {}
 
-            # print(f"--> {self.cmd_index}: {cmd}")
+            if self.debug:
+                print(f"--> {self.cmd_index}: {cmd}")
 
             action = None
             typeout = cmd.typeout
