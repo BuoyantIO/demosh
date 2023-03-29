@@ -7,11 +7,12 @@ a tool for doing live demos of relatively complex things. See `testing.md`
 and `testing.sh` for examples.
 
 <!--
-SPDX-FileCopyrightText: 2022 Buoyant, Inc.
+SPDX-FileCopyrightText: 2022-2023 Buoyant, Inc.
 SPDX-License-Identifier: Apache-2.0
 -->
 
-- For build instructions, see [`BUILDING.md`](BUILDING.md).
+- For instructions on installing `demosh`, see [`INSTALLING.md`](INSTALLING.md).
+- If you want to work on `demosh` itself, see [`DEVELOPING.md`](DEVELOPING.md).
 - For a demo of `demosh` itself, see [`demo/DEMO.md`](demo/DEMO.md).
 
 ----
@@ -41,8 +42,8 @@ When `demosh` has a command to execute in interactive mode, it will:
 - Run the command
 - Optionally wait for a RETURN
 
-By default, typing the command and waiting for RETURN _after_ execution are
-enabled, and waiting for RETURN after typing the command is disabled.
+By default, typing the command and waiting for RETURN _before_ execution are
+enabled, and waiting for RETURN after executing the command is disabled.
 
 While "waiting for RETURN", there are several things you can actually type:
 
