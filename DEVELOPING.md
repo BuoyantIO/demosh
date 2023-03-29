@@ -11,6 +11,7 @@ To install `demosh` from source, you'll need Python 3.8.10 or higher,
 
 ## Shipping a New Version
 
+- **Make sure that `make lint` runs clean before releasing a new version.**
 - Edit `demosh/__init__.py` to change the version. **THIS IS VERY IMPORTANT.**
   - Note that `demosh` uses [semantic versioning](https://semver.org/).
 - Commit and push.

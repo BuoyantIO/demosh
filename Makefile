@@ -9,3 +9,7 @@ uninstall:
 dev:
 	pip3 uninstall --yes demosh
 	flit install --symlink
+
+mypy lint:
+	mypy demosh
+

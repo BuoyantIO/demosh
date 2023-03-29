@@ -22,7 +22,7 @@
 # For more info, see README.md. If you've somehow found demosh without also
 # finding its repo, it's at github.com/BuoyantIO/demosh.
 
-from typing import Dict, Iterator, List, Optional, TYPE_CHECKING
+from typing import Any, Dict, Iterator, List, Optional, TYPE_CHECKING
 
 import sys
 
@@ -55,6 +55,9 @@ class DemoState:
         self.shellstate = shellstate
         self._end_color: Optional[str] = None
         self._colors: Dict[str, str] = {}
+        self._sane: Optional[List[Any]] = None
+        self._cbreak: Optional[List[Any]] = None
+        self._raw: Optional[List[Any]] = None
 
         self._overrides: Dict[str, bool] = {}
 
@@ -71,11 +74,11 @@ class DemoState:
 
         self.fd = sys.stdin.fileno()
 
-        if self.parent:
+        if self.parent is not None:
             # We have a parent. Copy its termios settings...
-            self._sane = parent._sane
-            self._cbreak = parent._cbreak
-            self._raw = parent._raw
+            self._sane = self.parent._sane
+            self._cbreak = self.parent._cbreak
+            self._raw = self.parent._raw
         else:
             # No parent. Actually set termios stuff ourselves...
             self.setup_termios()
@@ -487,13 +490,16 @@ class DemoState:
         self._raw[CC][termios.VTIME] = 0
 
     def sane(self) -> None:
-        termios.tcsetattr(self.fd, termios.TCSADRAIN, self._sane)
+        if self._sane:
+            termios.tcsetattr(self.fd, termios.TCSADRAIN, self._sane)
 
     def cbreak(self) -> None:
-        termios.tcsetattr(self.fd, termios.TCSADRAIN, self._cbreak)
+        if self._cbreak:
+            termios.tcsetattr(self.fd, termios.TCSADRAIN, self._cbreak)
 
     def raw(self) -> None:
-        termios.tcsetattr(self.fd, termios.TCSADRAIN, self._raw)
+        if self._raw:
+            termios.tcsetattr(self.fd, termios.TCSADRAIN, self._raw)
 
     def find_previous_command(self, delta: int) -> Optional[int]:
         idx = self.cmd_index - delta
@@ -554,7 +560,7 @@ class DemoState:
                         self.display_slowly("$ ", cmd.cmdline[2:].strip(), "\n")
                     else:
                         self.display(self.shellstate.expand_env(cmd.cmdline.rstrip()),
-                                     markdown=cmd.markdown)
+                                     markdown=bool(cmd.markdown))
                     continue
 
             # If we're here, it's meant to be executed. First, apply overrides.
