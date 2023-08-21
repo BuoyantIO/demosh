@@ -22,6 +22,14 @@ to either be in Markdown comments, or in bash blocks. We'll use a Markdown
 comment here.
 <!-- @import macros.sh -->
 
+We can define hooks too.
+
+<!-- @hook show_browser BROWSER -->
+
+```bash
+#@hook nonexistant NONEXISTANT
+```
+
 The `@SHOW` and `@HIDE` directives control whether we're showing commands,
 waiting for the user to confirm proceeding, etc., or just reading through
 things non-interactively. The `@SHOW` directive below (in a comment, so you
@@ -48,6 +56,28 @@ world* for emphasis?
 
 Backticks don't do other formatting, so `COLOR_NAME` should format correctly,
 as should `_*_*_*_*_`.
+
+### The @ifhook directive
+
+First let's check for hooks. If you've set `$DEMO_HOOK_BROWSER` to
+a nonempty value, you should see "we have a browser hook!" here.
+
+```bash
+#@ifhook show_browser
+#@immed
+echo "We have a browser hook!"
+#@endif
+```
+
+As long as you haven't set `$DEMO_HOOK_NONEXISTANT` to a nonempty
+value, you should not see "we have a nonexistant hook?" here.
+
+```bash
+#@ifhook nonexistant
+#@immed
+echo 'We have a nonexistant hook?'
+#@endif
+```
 
 ### Assignments and functions
 

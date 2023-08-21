@@ -12,15 +12,5 @@
   date
 #@end
 
-# wait_clear will wait for the user to hit RETURN, then
-# clear the screen.
-
-#@macro wait_clear
-  echo "Waiting..."
-  #@wait
-  #@clear
-#@end
-
-# Neither of those macro definitions will actually show
-# up when importing this file, of course, but they'll be
-# usable after.
+# This macro definitions won't actually show up when
+# importing this file, of course, but it'll be usable after.

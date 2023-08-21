@@ -22,7 +22,7 @@
 # For more info, see README.md. If you've somehow found demosh without also
 # finding its repo, it's at github.com/BuoyantIO/demosh.
 
-from typing import Any, Dict, Iterator, List, Optional, TYPE_CHECKING
+from typing import Any, Dict, Iterator, List, Optional, Set, TYPE_CHECKING
 
 import sys
 
@@ -31,6 +31,7 @@ import os
 import random
 import select
 import termios
+from .builtins import script as builtin_script
 
 from .command import RawSingleValue, RawMultiValue, Command, InputReader
 
@@ -43,10 +44,18 @@ def chardelay() -> float:
 
 
 class DemoState:
+    Standalones = {
+        "checkfor",
+        "print",
+    }
+
     def __init__(self, shellstate: 'ShellState', mode: str, script: Iterator[str],
                  parent: Optional['DemoState']=None,
-                 debug: Optional[bool]=False) -> None:
-        self.debug = debug
+                 debug: Optional[bool]=False,
+                 load_builtins: Optional[bool]=True,
+                 load_init: Optional[bool]=True) -> None:
+        self._level = parent._level + 1 if parent else 0
+        self.debug = debug or (parent and parent.debug)
         self.parent = parent
         self.mode = mode
         self.skipping = False
@@ -89,6 +98,42 @@ class DemoState:
 
         self.commands: List[Command] = []
 
+        if load_builtins and not parent:
+            if self.debug:
+                print("Loading builtins...")
+
+            self.read_commands(shellstate, InputReader("shell", iter(builtin_script.split("\n"))))
+
+            if self.debug:
+                print("End of builtins...")
+
+        if load_init and not parent:
+            try:
+                shell_init = open(os.path.expanduser("~/.demoshrc"), "r")
+
+                if self.debug:
+                    print("Loading ~/.demoshrc...")
+
+                self.read_commands(shellstate, InputReader("shell", shell_init))
+
+                if self.debug:
+                    print("End of ~/.demoshrc...")
+            except FileNotFoundError:
+                pass
+
+            try:
+                md_init = open(os.path.expanduser("~/.demoshrc.md"), "r")
+
+                if self.debug:
+                    print("Loading ~/.demoshrc.md...")
+
+                self.read_commands(shellstate, InputReader("markdown", md_init))
+
+                if self.debug:
+                    print("End of ~/.demoshrc.md...")
+            except FileNotFoundError:
+                pass
+
         self.read_commands(shellstate, InputReader(self.mode, script))
 
     def read_commands(self, shellstate: 'ShellState', reader: Optional[InputReader]) -> None:
@@ -97,7 +142,7 @@ class DemoState:
 
         for rawcmd in reader.read_element():
             if self.debug:
-                print(f"CMD {rawcmd}")
+                print(f"{self._level}: CMD {rawcmd}")
 
             if rawcmd.type == "cmd":
                 assert isinstance(rawcmd, RawSingleValue)
@@ -126,7 +171,9 @@ class DemoState:
 
                 value = self.shellstate.env.get(varname, None)
 
-                if not value:
+                if value:
+                    self.shellstate._hooks.add(rawcmd.name)
+                else:
                     value = ":;"
 
                 shellstate.functions.append("\n".join([
@@ -136,10 +183,29 @@ class DemoState:
                 ]))
 
             elif rawcmd.type == "macro":
+                if self.debug:
+                    print(f"{self._level}: processing macro {rawcmd.name}")
+
                 assert isinstance(rawcmd, RawMultiValue)
                 macro_ds = DemoState(self.shellstate, "shell", iter(rawcmd.value), parent=self)
 
+                if self.debug:
+                    print(f"{self._level}: saving DemoState for macro {rawcmd.name}")
+
                 self.shellstate.macros[rawcmd.name] = macro_ds
+
+            elif rawcmd.type == "ifhook":
+                if self.debug:
+                    print(f"{self._level}: processing ifhook {rawcmd.name}")
+
+                assert isinstance(rawcmd, RawMultiValue)
+                ifhook_ds = DemoState(self.shellstate, "shell", iter(rawcmd.value), parent=self)
+
+                if self.debug:
+                    print(f"{self._level}: pushing DemoState for ifhook {rawcmd.name}")
+
+                cmd = Command(rawcmd.name, conditional="ifhook", demostate=ifhook_ds)
+                self.commands.append(cmd)
 
     def handlemeta(self, cmd: Command) -> bool:
         # Make mypy shut up
@@ -156,18 +222,18 @@ class DemoState:
         elif cs == "HIDE":
             self.showing = False
             return True
+        elif cs in DemoState.Standalones:
+            # This is a standalone command, not a modifier for the next command.
+            self._overrides['wait_before'] = False
+            self._overrides['wait_after'] = True
+            self._overrides['type_command'] = False
+            return False
         elif cs == "wait":
             # This is a standalone command, not a modifier for the next command.
             self._overrides['wait_before'] = False
             self._overrides['wait_after'] = True
             self._overrides['type_command'] = False
             self._overrides['explicit_wait'] = True
-            return False
-        elif cs == "print":
-            # This is a standalone command, not a modifier for the next command.
-            self._overrides['wait_before'] = False
-            self._overrides['wait_after'] = True
-            self._overrides['type_command'] = False
             return False
         elif cs == "waitafter":
             self._overrides['wait_after'] = True
@@ -562,6 +628,20 @@ class DemoState:
                         self.display(self.shellstate.expand_env(cmd.cmdline.rstrip()),
                                      markdown=bool(cmd.markdown))
                     continue
+
+            if cmd.isconditional():
+                if cmd.conditional == "ifhook":
+                    if self.debug:
+                        ispresent = '' if (cmd.cmdline in self.shellstate._hooks) else ' not'
+                        print(f"Hook {cmd.cmdline}{ispresent} present")
+
+                    if cmd.cmdline in self.shellstate._hooks:
+                        assert isinstance(cmd.demostate, DemoState)
+                        cmd.demostate.run()
+                else:
+                    print(f"Invalid conditional type {cmd.conditional}")
+
+                continue
 
             # If we're here, it's meant to be executed. First, apply overrides.
             cmd = cmd.copy()

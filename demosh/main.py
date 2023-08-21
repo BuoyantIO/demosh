@@ -36,6 +36,8 @@ def main() -> None:
 
     parser.add_argument('--version', action='version', version=f"%(prog)s {__version__}")
     parser.add_argument('--debug', action='store_true', help="enable debug output")
+    parser.add_argument('--no-builtins', action='store_true', help="don't load builtin functions")
+    parser.add_argument('--no-init', action='store_true', help="don't run ~/.demoshrc on startup")
 
     parser.add_argument('script', type=str, help="script to run")
     parser.add_argument('args', type=str, nargs=argparse.REMAINDER, help="optional arguments to pass to script")
@@ -51,7 +53,10 @@ def main() -> None:
     script = open(scriptname, "r")
 
     shellstate = ShellState(sys.argv[0], scriptname, args.args)
-    demostate = DemoState(shellstate, mode, script, debug=args.debug)
+    demostate = DemoState(shellstate, mode, script,
+                          debug=args.debug,
+                          load_builtins=not args.no_builtins,
+                          load_init=not args.no_init)
 
     try:
         demostate.run()

@@ -14,8 +14,7 @@ The demo doesn't really have other external requirements, but it's intended to
 be a Real Demo (if such a thing really exists), so it uses hooks and all that
 jazz.
 
-<!-- @import demosh/demo-tools.sh -->
-<!-- @import demosh/check-requirements.sh -->
+<!-- @hook show_editor EDITOR -->
 <!-- @start_livecast -->
 ---
 <!-- @SHOW -->
@@ -125,10 +124,14 @@ Put it all together and you can show the demo you're seeing now by running the
 Markdown file we're going to show you next (assuming the hooks are working, of
 course.)
 
-<!-- @wait -->
-<!-- @show_editor -->
-<!-- @wait_clear -->
-<!-- @show_terminal -->
+```bash
+#@wait
+#@ifhook show_editor
+  #@show_editor
+  #@wait_clear
+  #@show_terminal
+#@endif
+```
 
 So that's the whirlwind tour of `demosh` -- hope you enjoyed it! We'll finish
 by using a hook to go back to the slides.

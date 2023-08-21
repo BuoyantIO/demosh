@@ -22,7 +22,7 @@
 # For more info, see README.md. If you've somehow found demosh without also
 # finding its repo, it's at github.com/BuoyantIO/demosh.
 
-from typing import Dict, List, TYPE_CHECKING
+from typing import Dict, List, Set, TYPE_CHECKING
 
 import sys
 
@@ -63,6 +63,7 @@ class ShellState:
         self.functions: List[str] = []
         self.macros: Dict[str, 'DemoState'] = {}
         self.exit_on_failure = False
+        self._hooks: Set[str] = set()
 
         self.shell = os.environ.get("SHELL", "/bin/sh")
         self.env["SHELL"] = os.path.abspath(argv0)

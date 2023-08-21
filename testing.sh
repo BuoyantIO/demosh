@@ -11,12 +11,32 @@ echo "This will run like a normal script."
 # We can import things from other files.
 #@import macros.sh
 
+# We can define hooks too.
+#@hook show_browser BROWSER
+#@hook nonexistant NONEXISTANT
+
 ## The #@SHOW and #@HIDE tags control whether we're showing commands, waiting
 ## for the user to confirm proceeding, etc., or just running things like a
 ## normal script.
 #@SHOW
 
 # Welcome to our demo. Isn't it awesome?
+
+# First let's check for hooks. If you've set DEMO_HOOK_BROWSER to
+# a nonempty value, you should see "we have a browser hook!" here.
+
+#@ifhook show_browser
+#@immed
+echo "We have a browser hook!"
+#@endif
+
+# As long as you haven't set DEMO_HOOK_NONEXISTANT to a nonempty
+# value, you should not see "we have a nonexistant hook?" here.
+
+#@ifhook nonexistant
+#@immed
+echo 'We have a nonexistant hook?'
+#@endif
 
 # Let's try an assignment.
 FOO="Hello world"

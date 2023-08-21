@@ -33,6 +33,21 @@ shell.
 so that the script can do initialization quietly. Use the `@SHOW` directive
 to switch into the fully-interactive mode (and use `@HIDE` to go back).
 
+### Init Scripts and Builtins
+
+On startup, `demosh` will load `$HOME/.demoshrc` and `$HOME/.demoshrc.md` if
+they exist, parsing `.demoshrc` as a shell file and `.demoshrc.md` as a
+Markdown file. The `--no-init` flag prevents this behavior.
+
+These files are treated exactly the same as files supplied on the command
+line. In particular, `@SHOW` directives will cause them to go interactive (as
+discussed below), and definitions will be available for files on the command
+line to use. There's no need to supply either, and no reason to supply both.
+
+`demosh` will also load a set of builtin definitions on startup, unless the
+`--no-builtins` flag is present on the command line. Builtins are discussed
+below with other directives.
+
 ### Executing and Waiting
 
 When `demosh` has a command to execute in interactive mode, it will:
@@ -141,6 +156,21 @@ etc. **Note that there is no leading `#` in this case.**
 
 - `@hook`: see "Hooks" below.
 
+- `@ifhook`: see "Hooks" below.
+
+Some "directives" are actually macros defined as builtins:
+
+- `@wait_clear` waits for RETURN, then clears the screen.
+
+- `@browser_then_terminal` tries to use hooks named `show_browser` and
+  `show_terminal` to wait, show a browser, then return to the terminal. Both
+  must be defined for the macro to have any effect.
+
+- `@start_livecast`, likewise, tries to use hooks named `show_slides` and
+  `show_terminal` to show a slide deck, wait, clear the terminal screen, and
+  show the terminal. Again, both hooks must be defined for the macro to have
+  any effect.
+
 Finally, any other directive will be interpreted as an immediate command, so
 (in shell mode):
 
@@ -221,6 +251,21 @@ not set.
 Note that hooks can appear in macros, and that, again, it's a good idea to
 only invoke hooks with the `#@` prefix so that the calls are ignored if you
 run the script without `demosh`.
+
+There is also a special form, `@ifhook`, for hooks:
+
+```bash
+#@ifhook hookname
+  #@command1
+  #@command2
+  ...
+#@endif
+```
+
+in which the commands enclosed between `@ifhook` and `@endif` will be run only
+if the named hook is not a no-op. This permits, for example, skipping a
+sequence with multiple `@wait`s if it's not going to have any useful effect,
+so that the user doesn't have to press RETURN multiple times to continue.
 
 ## Limitations
 

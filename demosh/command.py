@@ -22,7 +22,10 @@
 # For more info, see README.md. If you've somehow found demosh without also
 # finding its repo, it's at github.com/BuoyantIO/demosh.
 
-from typing import Generator, Iterator, List, Optional, Union
+from typing import Generator, Iterator, List, Optional, Union, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .demostate import DemoState
 
 class RawSingleValue:
     def __init__(self, type: str, name: str, value: str) -> None:
@@ -44,10 +47,14 @@ class RawMultiValue:
 
 
 class Command:
-    def __init__(self, cmdline: str, comment: Optional[bool]=False, markdown: Optional[bool]=False) -> None:
+    def __init__(self, cmdline: str, comment: Optional[bool]=False,
+                 markdown: Optional[bool]=False, conditional: Optional[str]=None,
+                 demostate: Optional['DemoState']=None) -> None:
         self.cmdline = cmdline
         self.comment = comment
         self.markdown = markdown
+        self.conditional = conditional
+        self.demostate = demostate
         self.hidden = False
         self.type_command = True
         self.typeout = True
@@ -56,7 +63,8 @@ class Command:
         self.explicit_wait = False
 
     def copy(self) -> 'Command':
-        c2 = Command(self.cmdline, comment=self.comment, markdown=self.markdown)
+        c2 = Command(self.cmdline, comment=self.comment, markdown=self.markdown,
+                     conditional=self.conditional, demostate=self.demostate)
         c2.cmdline = self.cmdline
         c2.hidden = self.hidden
         c2.type_command = self.type_command
@@ -81,7 +89,9 @@ class Command:
         if self.comment:
             kind = "#M#" if self.markdown else "###"
 
-        return f"<{kind} {S}{B}{A}{T}{H} {hrcmd}>"
+        cond = f" {self.conditional}" if self.conditional else ""
+
+        return f"<{kind} {S}{B}{A}{T}{H}{cond} {hrcmd}>"
 
     def __bool__(self) -> bool:
         return bool(self.cmdline)
@@ -119,6 +129,8 @@ class Command:
 
         return self.cmdline[0] == '#'
 
+    def isconditional(self) -> bool:
+        return bool(self.conditional)
 
 class InputReader:
     def __init__(self, mode: str, input: Iterator[str]) -> None:
@@ -153,6 +165,21 @@ class InputReader:
 
             return RawSingleValue("import", "import", path.strip())
 
+        elif line.startswith("#@ifhook"):
+            _, hookname = line.strip().split(" ", 1)
+
+            body: List[str] = []
+
+            while True:
+                l2 = next(self.input)
+
+                if l2.rstrip() == "#@endif":
+                    break
+
+                body.append(l2.lstrip())
+
+            return RawMultiValue("ifhook", hookname, body)
+
         else:
             # If it's not a special directive, meh, just return it
             # as a command.
@@ -173,7 +200,8 @@ class InputReader:
 
                 if (line.startswith("#@hook ") or
                     line.startswith("#@macro ") or
-                    line.startswith("#@import ")):
+                    line.startswith("#@import ") or
+                    line.startswith("#@ifhook ")):
                     if buf:
                         raise Exception("Can't have a directive in a compound statement")
 
