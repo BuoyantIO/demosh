@@ -17,4 +17,5 @@ To install `demosh` from source, you'll need Python 3.8.10 or higher,
 - Commit and push.
 - Tag the pushed commit with the same version that's contained in
   `__init__.py`, with a leading `v`.
-
+- Make sure you have a valid PyPI token in `$HOME/.pypi-token`.
+- Run `make publish`.

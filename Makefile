@@ -13,3 +13,5 @@ dev:
 mypy lint:
 	mypy demosh
 
+publish:
+	FLIT_USERNAME="__token__" FLIT_PASSWORD=$$(cat $$HOME/.pypi-token) flit publish
