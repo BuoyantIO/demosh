@@ -37,8 +37,8 @@ if TYPE_CHECKING:
     from .demostate import DemoState
 
 
-# This is what an assignment looks like to us...
-reAssignment = re.compile(r"^\s*([a-zA-Z0-9_]+)=(.*)\s*$")
+# This is what the start of an assignment looks like to us...
+reAssignment = re.compile(r"^\s*(export\s+)?([a-zA-Z0-9_]+)=")
 
 # ...and this is what the first line of a function definition
 # looks like to us.
@@ -99,13 +99,15 @@ class ShellState:
         rc = 127
 
         # cmdline = self.expand_env(cmdline)
-        # print(">> run %s" % cmdline)
+        # print(">> run << %s >>" % cmdline)
 
         m = reAssignment.match(cmdline)
 
         if m:
-            # print(f"Assignment: {m.group(1)} = {m.group(2)}")
-            return self.do_assign(demostate, m.group(1), m.group(2))
+            var=m.group(2)
+            value=cmdline[m.end(0):]
+            # print(f"Assignment: {var} = {value}")
+            return self.do_assign(demostate, var, value)
 
         m = reFunction.match(cmdline)
 
@@ -218,16 +220,36 @@ class ShellState:
                                 cwd=self.cwd, env=self.env, close_fds=True)
 
         assert proc.stdin is not None   # hush, mypy
-        proc.stdin.write(f'{name}={value}\n'.encode('utf-8'))
-        proc.stdin.write(f'echo "${name}"\n'.encode('utf-8'))
+
+        fn = "\n".join(self.functions) + "\n"
+        c1 = f'{name}={value}'
+        c2 = f'echo "${name}"'
+
+        # print("assign c1: '%s'" % c1)
+        # print("assign c2: '%s'" % c2)
+
+        proc.stdin.write(fn.encode('utf-8'))
+        proc.stdin.write(c1.encode('utf-8'))
+        proc.stdin.write("\n".encode('utf-8'))
+        proc.stdin.write(c2.encode('utf-8'))
+        proc.stdin.write("\n".encode('utf-8'))
 
         stdout, stderr = proc.communicate()
 
+        # print("assign rc: %d" % proc.returncode)
+        # print("assign stdout: '%s'" % stdout.decode('utf-8'))
+        # print("assign stderr: '%s'" % stderr.decode('utf-8'))
+
+        if stderr:
+            sys.stdout.write(stderr.decode('utf-8'))
+            sys.stdout.flush()
+
         if proc.returncode == 0:
             self.env[name] = stdout.decode('utf-8').strip()
+            # print("assign final: '%s' = '%s'" % (name, self.env[name]))
             return 0
 
-        print("assignment failed: %s" % stderr.decode('utf-8'))
+        print("assignment failed!")
         return 1
 
     def do_shell_command(self, demostate: 'DemoState', cmd: str) -> int:
