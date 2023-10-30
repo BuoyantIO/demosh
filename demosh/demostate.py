@@ -54,8 +54,14 @@ class DemoState:
                  debug: Optional[bool]=False,
                  load_builtins: Optional[bool]=True,
                  load_init: Optional[bool]=True) -> None:
-        self._level = parent._level + 1 if parent else 0
-        self.debug = debug or (parent and parent.debug)
+        self._level: int = parent._level + 1 if parent else 0
+        self.debug = False
+
+        if debug:
+            self.debug = True
+        elif parent:
+            self.debug = parent.debug
+
         self.parent = parent
         self.mode = mode
         self.skipping = False
