@@ -79,6 +79,9 @@ echo 'We have a nonexistant hook?'
 #@endif
 ```
 
+Hit RETURN to continue (this is the wait directive).
+<!-- @wait -->
+
 ### Assignments and functions
 
 Let's try an assignment.
@@ -86,6 +89,14 @@ Let's try an assignment.
 ```bash
 FOO="Hello world"
 echo "$FOO"
+```
+
+`export`ed assignments work too. (The word `export` itself is a noop in
+`demosh`, to be clear: variables are always exported.)
+
+```bash
+export BAR="Exported hello world"
+echo "$BAR"
 ```
 
 The `$SHELL` environment variable should be overwritten to be `demosh` itself.
@@ -115,6 +126,13 @@ Can we run the functions?
 ```bash
 hello "world"
 hello2 "world"
+```
+
+Assignments persist across blocks, of course.
+
+```bash
+echo $FOO
+echo $BAR
 ```
 
 ### `cd`
