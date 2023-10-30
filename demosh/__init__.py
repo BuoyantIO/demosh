@@ -30,7 +30,7 @@ finding its repo, it's at github.com/BuoyantIO/demosh.
 
 
 # Flit reads this dynamically when building or publishing.
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 
 
 import sys
