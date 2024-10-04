@@ -35,14 +35,22 @@ to switch into the fully-interactive mode (and use `@HIDE` to go back).
 
 ### Init Scripts and Builtins
 
-On startup, `demosh` will load `$HOME/.demoshrc` and `$HOME/.demoshrc.md` if
-they exist, parsing `.demoshrc` as a shell file and `.demoshrc.md` as a
-Markdown file. The `--no-init` flag prevents this behavior.
+On startup, `demosh` will search for one of four startup files to read:
 
-These files are treated exactly the same as files supplied on the command
-line. In particular, `@SHOW` directives will cause them to go interactive (as
-discussed below), and definitions will be available for files on the command
-line to use. There's no need to supply either, and no reason to supply both.
+- `.demoshrc` in the current directory
+- `.demoshrc.md` in the current directory
+- `$HOME/.demoshrc`
+- `$HOME/.demoshrc.md`
+
+These files are checked in the order above; if any are present, the first one
+found will be loaded, with `.demoshrc` files treated as shell scripts and
+`.demoshrc.md` files treated as Markdown. The `--no-init` flag prevents this
+behavior.
+
+The startup file is treated _exactly_ the same as files supplied on the
+command line. In particular, `@SHOW` directives will cause them to go
+interactive (as discussed below), and anything they define will be available
+for files on the command line to use.
 
 `demosh` will also load a set of builtin definitions on startup, unless the
 `--no-builtins` flag is present on the command line. Builtins are discussed
