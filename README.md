@@ -6,23 +6,30 @@ for you to hit RETURN to proceed before running commands. It was created as
 a tool for doing live demos of relatively complex things. See `testing.md`
 and `testing.sh` for examples.
 
+**To exit `demosh`, hit `Q` (capital `Q`).** `demosh` deliberately ignores
+signals and won't respond to `control-C` or `control-D`, so that the commands
+it runs don't get confused.
+
 <!--
 SPDX-FileCopyrightText: 2022-2023 Buoyant, Inc.
 SPDX-License-Identifier: Apache-2.0
 -->
 
-- For instructions on installing `demosh`, see [`INSTALLING.md`](INSTALLING.md).
-- If you want to work on `demosh` itself, see [`DEVELOPING.md`](DEVELOPING.md).
-- For a demo of `demosh` itself, see [`demo/DEMO.md`](demo/DEMO.md).
+**To install `demosh`:** just run `pip install demosh`! or see
+[`INSTALLING.md`](INSTALLING.md) if you want to install from source.
+
+**To use `demosh` to demo itself:** see [`demo/DEMO.md`](demo/DEMO.md).
+
+**To work on `demosh` itself:** see [`DEVELOPING.md`](DEVELOPING.md).
+
 
 ----
 
-`demosh` is a demo shell: it reads shell scripts or Markdown files and
-executes shell commands from them. However, it can also output commentary
-from the script, show commands before running them, and pause before (or
-after) running each command. Pausing and what to show can be controlled by
-inline comments in the script itself. See `testing.md` and `testing.sh` for
-examples.
+`demosh` is a **D**emo **SH**ell: it reads shell scripts or Markdown files and
+executes shell commands from them. However, it can also output commentary from
+the script, show commands before running them, and pause before (or after)
+running each command. Pausing and what to show can be controlled by inline
+comments in the script itself. See `testing.md` and `testing.sh` for examples.
 
 ## Running
 

@@ -27,7 +27,7 @@ import sys
 import argparse
 
 from . import __version__
-from .shellstate import ShellState
+from .shellstate import ShellState, str2bool
 from .demostate import DemoState
 
 
@@ -38,6 +38,7 @@ def main() -> None:
     parser.add_argument('--debug', action='store_true', help="enable debug output")
     parser.add_argument('--no-builtins', action='store_true', help="don't load builtin functions")
     parser.add_argument('--no-init', action='store_true', help="don't run ~/.demoshrc on startup")
+    parser.add_argument('--no-blurb', action='store_true', help="don't print the demosh blurb on startup")
 
     parser.add_argument('script', type=str, help="script to run")
     parser.add_argument('args', type=str, nargs=argparse.REMAINDER, help="optional arguments to pass to script")
@@ -57,6 +58,23 @@ def main() -> None:
                           debug=args.debug,
                           load_builtins=not args.no_builtins,
                           load_init=not args.no_init)
+
+    demosh_no_blurb = str2bool(shellstate.env.get("DEMOSH_NO_BLURB", None))
+
+    if not (args.no_blurb or demosh_no_blurb):
+        print(f"demosh {__version__}: Interactive Demo SHell for Markdown and shell scripts")
+        print("(c) 2022-2024 Buoyant, Inc.; Apache 2.0 License")
+        print("https://github.com/BuoyantIO/demosh")
+        print("")
+        print("To exit, hit Q (capital Q!) when demosh is waiting for input.")
+        print("To skip this message, use --no-blurb or set DEMOSH_NO_BLURB=true.")
+        print("")
+        print("Hit RETURN to continue, Q to quit")
+
+        action = demostate.wait_to_proceed()
+
+        if action == "quit":
+            return
 
     try:
         demostate.run()

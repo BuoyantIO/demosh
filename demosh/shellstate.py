@@ -44,6 +44,10 @@ reAssignment = re.compile(r"^\s*(export\s+)?([a-zA-Z0-9_]+)=")
 # looks like to us.
 reFunction = re.compile(r"^\s*(function\s+)?([a-zA-Z0-9_]+)\s*\(\)\s+\{")
 
+def str2bool(v):
+    return str(v).lower() in ("yes", "true", "t", "y", "1")
+
+
 class ShellState:
     @staticmethod
     def ignore_signals() -> None:
