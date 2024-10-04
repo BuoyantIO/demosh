@@ -67,6 +67,7 @@ class ShellState:
         self.functions: List[str] = []
         self.macros: Dict[str, 'DemoState'] = {}
         self.exit_on_failure = False
+        self.quiet_failure = str2bool(os.environ.get("DEMOSH_QUIET_FAILURE", ""))
         self._hooks: Set[str] = set()
 
         self.shell = os.environ.get("SHELL", "/bin/sh")
@@ -218,7 +219,11 @@ class ShellState:
 
             i += 1
 
-        # print("assign '%s' = '%s'" % (name, value))
+        # print(f"assign '{name}' = '{value}'")
+
+        if name == "DEMOSH_QUIET_FAILURE":
+            self.quiet_failure = str2bool(value.strip())
+            # print(f"quiet_failure = {self.quiet_failure}")
 
         proc = subprocess.Popen(["bash"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                 cwd=self.cwd, env=self.env, close_fds=True)
