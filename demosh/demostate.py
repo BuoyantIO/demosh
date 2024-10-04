@@ -116,7 +116,7 @@ class DemoState:
         if load_init and not parent:
             init_file = None
             init_path = None
-            init_mode = None
+            init_mode = "shell"
 
             for path, mode in [
                 ( ".demoshrc", "shell" ),
