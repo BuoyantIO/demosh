@@ -32,7 +32,7 @@ from .demostate import DemoState
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description='Demo SHell: run shell scripts with commentary and pauses')
+    parser = argparse.ArgumentParser(description=f'Demo SHell {__version__}: run shell scripts with commentary and pauses')
 
     parser.add_argument('--version', action='version', version=f"%(prog)s {__version__}")
     parser.add_argument('--debug', action='store_true', help="enable debug output")
