@@ -22,8 +22,13 @@ echo "This will run like a normal script."
 
 # Welcome to our demo. Isn't it awesome?
 
-# First let's check for hooks. If you've set DEMO_HOOK_BROWSER to
-# a nonempty value, you should see "we have a browser hook!" here.
+# You can use the `@print` directive to produce colorized output:
+
+#@print This will be ordinary black text.
+#@print # This will be red like a comment.
+
+# Next, let's check for hooks. If you've set DEMO_HOOK_BROWSER to a nonempty
+# value, you should see "we have a browser hook!" here.
 
 #@ifhook show_browser
 #@immed
@@ -55,7 +60,7 @@ echo "$BAR"
 echo "SHELL is $SHELL"
 
 # Here's a function definition with the "function" keyword...
-hello() {
+function hello() {
     echo "Hello, $1!"
 }
 

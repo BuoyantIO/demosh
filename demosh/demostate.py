@@ -114,31 +114,35 @@ class DemoState:
                 print("End of builtins...")
 
         if load_init and not parent:
-            try:
-                shell_init = open(os.path.expanduser("~/.demoshrc"), "r")
+            init_file = None
+            init_path = None
+            init_mode = None
 
+            for path, mode in [
+                ( ".demoshrc", "shell" ),
+                ( ".demoshrc.md", "markdown" ),
+                ( os.path.expanduser("~/.demoshrc"), "shell" ),
+                ( os.path.expanduser("~/.demoshrc.md"), "markdown" ),
+            ]:
+                try:
+                    init_file = open(path, "r")
+                except FileNotFoundError:
+                    continue
+
+                init_path = path
+                init_mode = mode
+                break
+
+            if init_file:
                 if self.debug:
-                    print("Loading ~/.demoshrc...")
+                    print(f"Loading {init_path} as {init_mode}...")
 
-                self.read_commands(shellstate, InputReader("shell", shell_init))
+                self.read_commands(shellstate, InputReader(init_mode, init_file))
 
                 if self.debug:
                     print("End of ~/.demoshrc...")
-            except FileNotFoundError:
-                pass
 
-            try:
-                md_init = open(os.path.expanduser("~/.demoshrc.md"), "r")
-
-                if self.debug:
-                    print("Loading ~/.demoshrc.md...")
-
-                self.read_commands(shellstate, InputReader("markdown", md_init))
-
-                if self.debug:
-                    print("End of ~/.demoshrc.md...")
-            except FileNotFoundError:
-                pass
+                init_file.close()
 
         self.read_commands(shellstate, InputReader(self.mode, script))
 
@@ -717,7 +721,8 @@ class DemoState:
                 rc = self.shellstate.run(self, cmd)
 
                 if (rc != 0) and self.shellstate.exit_on_failure:
-                    print(f"{self.start_color(5)}...exiting due to failure.{self.end_color()}")
+                    if not self.shellstate.quiet_failure:
+                        print(f"{self.start_color(5)}...exiting due to failure.{self.end_color()}")
                     break
 
                 if self.showing and cmd.wait_after:

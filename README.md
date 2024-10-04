@@ -6,23 +6,30 @@ for you to hit RETURN to proceed before running commands. It was created as
 a tool for doing live demos of relatively complex things. See `testing.md`
 and `testing.sh` for examples.
 
+**To exit `demosh`, hit `Q` (capital `Q`).** `demosh` deliberately ignores
+signals and won't respond to `control-C` or `control-D`, so that the commands
+it runs don't get confused.
+
 <!--
 SPDX-FileCopyrightText: 2022-2023 Buoyant, Inc.
 SPDX-License-Identifier: Apache-2.0
 -->
 
-- For instructions on installing `demosh`, see [`INSTALLING.md`](INSTALLING.md).
-- If you want to work on `demosh` itself, see [`DEVELOPING.md`](DEVELOPING.md).
-- For a demo of `demosh` itself, see [`demo/DEMO.md`](demo/DEMO.md).
+**To install `demosh`:** just run `pip install demosh`! or see
+[`INSTALLING.md`](INSTALLING.md) if you want to install from source.
+
+**To use `demosh` to demo itself:** see [`demo/DEMO.md`](demo/DEMO.md).
+
+**To work on `demosh` itself:** see [`DEVELOPING.md`](DEVELOPING.md).
+
 
 ----
 
-`demosh` is a demo shell: it reads shell scripts or Markdown files and
-executes shell commands from them. However, it can also output commentary
-from the script, show commands before running them, and pause before (or
-after) running each command. Pausing and what to show can be controlled by
-inline comments in the script itself. See `testing.md` and `testing.sh` for
-examples.
+`demosh` is a **D**emo **SH**ell: it reads shell scripts or Markdown files and
+executes shell commands from them. However, it can also output commentary from
+the script, show commands before running them, and pause before (or after)
+running each command. Pausing and what to show can be controlled by inline
+comments in the script itself. See `testing.md` and `testing.sh` for examples.
 
 ## Running
 
@@ -35,14 +42,22 @@ to switch into the fully-interactive mode (and use `@HIDE` to go back).
 
 ### Init Scripts and Builtins
 
-On startup, `demosh` will load `$HOME/.demoshrc` and `$HOME/.demoshrc.md` if
-they exist, parsing `.demoshrc` as a shell file and `.demoshrc.md` as a
-Markdown file. The `--no-init` flag prevents this behavior.
+On startup, `demosh` will search for one of four startup files to read:
 
-These files are treated exactly the same as files supplied on the command
-line. In particular, `@SHOW` directives will cause them to go interactive (as
-discussed below), and definitions will be available for files on the command
-line to use. There's no need to supply either, and no reason to supply both.
+- `.demoshrc` in the current directory
+- `.demoshrc.md` in the current directory
+- `$HOME/.demoshrc`
+- `$HOME/.demoshrc.md`
+
+These files are checked in the order above; if any are present, the first one
+found will be loaded, with `.demoshrc` files treated as shell scripts and
+`.demoshrc.md` files treated as Markdown. The `--no-init` flag prevents this
+behavior.
+
+The startup file is treated _exactly_ the same as files supplied on the
+command line. In particular, `@SHOW` directives will cause them to go
+interactive (as discussed below), and anything they define will be available
+for files on the command line to use.
 
 `demosh` will also load a set of builtin definitions on startup, unless the
 `--no-builtins` flag is present on the command line. Builtins are discussed
@@ -77,11 +92,14 @@ While "waiting for RETURN", there are several things you can actually type:
 - Hitting `+` will skip to the next command _without_ executing this one
   (note that this currently doesn't work well when executing a macro).
 
+<!--
+(! isn't currently implemented!)
+
 - Hitting `!` will spawn a subshell with all the environment variables
   defined in the script intact.
 
    - **NOTE WELL**: the subshell will not, at present, include functions
-     defined in the script.
+     defined in the script. -->
 
 When `demosh` has a command to execute in noninteractive mode, it just
 executes it.

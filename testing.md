@@ -57,6 +57,13 @@ world* for emphasis?
 Backticks don't do other formatting, so `COLOR_NAME` should format correctly,
 as should `_*_*_*_*_`.
 
+You can also use the `@print` directive to produce colorized output:
+
+```bash
+#@print This will be ordinary black text.
+#@print # This will be red like a comment.
+```
+
 ### The @ifhook directive
 
 First let's check for hooks. If you've set `$DEMO_HOOK_BROWSER` to
